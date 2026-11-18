@@ -1,6 +1,7 @@
 import { Controller, Get, Inject } from '@nestjs/common';
 import { firstValueFrom, timeout} from 'rxjs';
 import { ClientProxy } from '@nestjs/microservices';
+import { Public } from './auth/public.decorator';
 
 
 @Controller()
@@ -14,6 +15,7 @@ export class GatewayController {
   ) {}
 
   @Get('health')
+  @Public()
   async health(){
     const ping = async (serviceName : string, client: ClientProxy)=>{
       try{
