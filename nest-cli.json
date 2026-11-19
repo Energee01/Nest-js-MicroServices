@@ -7,9 +7,9 @@
   "compilerOptions": {
     "deleteOutDir": true,
     "builder": "rspack"
-    
+
   },
-  
+
   "projects": {
     "catalog": {
       "type": "application",
@@ -45,6 +45,15 @@
       "sourceRoot": "apps/nest-js-microservices/src",
       "compilerOptions": {
         "tsConfigPath": "apps/nest-js-microservices/tsconfig.app.json"
+      }
+    },
+    "rpc": {
+      "type": "library",
+      "root": "libs/rpc",
+      "entryFile": "index",
+      "sourceRoot": "libs/rpc/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/rpc/tsconfig.lib.json"
       }
     },
     "search": {

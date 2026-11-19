@@ -21,7 +21,15 @@
     "incremental": true,
     "skipLibCheck": true,
     "strict": true,
-    "strictPropertyInitialization": false
+    "strictPropertyInitialization": false,
+    "paths": {
+      "@app/rpc": [
+        "./libs/rpc/src"
+      ],
+      "@app/rpc/*": [
+        "./libs/rpc/src/*"
+      ]
+    }
   },
   "files": [],
   "references": [

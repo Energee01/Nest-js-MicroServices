@@ -34,7 +34,7 @@ export class UsersService {
                 }
             }, 
             {
-                returnDocument: 'after',
+                returnDocument: 'after', // replaces 'new: true'
                 upsert:true,
                 setDefaultsOnInsert: true
             }
