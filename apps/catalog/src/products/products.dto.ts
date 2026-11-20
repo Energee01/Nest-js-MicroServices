@@ -1,4 +1,9 @@
-import { IsDefined, IsNumber, IsOptional, IsString, Min, ValidateNested } from "class-validator";
+import { IsDefined, 
+        IsNumber, 
+        IsOptional,
+        IsString, 
+        Min, 
+        ValidateNested } from "class-validator";
 import type { ProductStatus } from "./product.schema";
 import { PartialType} from '@nestjs/mapped-types';
 import { Type } from "class-transformer";
