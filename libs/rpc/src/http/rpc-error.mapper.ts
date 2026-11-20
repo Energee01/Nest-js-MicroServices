@@ -11,7 +11,12 @@ export function mapRpcErrorToHttp(err: any): never{
 
 
     if(code === 'BAD_REQUEST' || code === 'VALIDATION_ERROR') {
-        throw new BadRequestException(message)
+        throw new BadRequestException({
+            statusCode: 400,
+            message,
+            error: 'Bad Request',
+            ...(payload?.details === undefined ? {} : { details: payload.details })
+        })
     }
 
     if(code === 'NOT_FOUND'){

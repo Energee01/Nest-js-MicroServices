@@ -5,14 +5,18 @@ import { Body,
          Inject, 
          Param, 
          Patch, 
-         Post } from "@nestjs/common";
+         Post, 
+         UploadedFile, 
+         UseInterceptors} from "@nestjs/common";
 import { ClientProxy } from "@nestjs/microservices";
 import { CurrentUser } from "../auth/current-user.decorator";
 import type { UserContext } from "../auth/auth.types";
 import { mapRpcErrorToHttp } from "@app/rpc";
-import { firstValueFrom } from "rxjs";
+import { firstValueFrom} from "rxjs";
 import { AdminOnly } from "../auth/admin.decorator";
 import { Public } from "../auth/public.decorator";
+import { FileInterceptor } from '@nestjs/platform-express';
+
 
 
 type Product = {
@@ -30,13 +34,23 @@ export class ProductsHttpController{
     constructor(
 
         //gateway talks to catalog via RMQ client
-        @Inject('CATALOG_CLIENT') private readonly catalogClient: ClientProxy
+        @Inject('CATALOG_CLIENT') private readonly catalogClient: ClientProxy,
+
+        @Inject('MEDIA_CLIENT') private readonly mediaClient:  ClientProxy
     ){}
 
     @Post('products')
     @AdminOnly()
+    @UseInterceptors(
+        FileInterceptor('image', {
+            limits: {
+                fileSize : 5 * 1024 * 1024
+            }
+        })
+    )
     async createProduct(
         @CurrentUser() user: UserContext,
+        @UploadedFile() file: Express.Multer.File | undefined,
         @Body()
         body: {
             name: string;
@@ -44,11 +58,31 @@ export class ProductsHttpController{
             price: number;
             status?: string;
             imageUrl?: string;
-
         }
     ){
-
         //already handling errors in productservice(catalog)
+        let imageUrl: string | undefined = undefined;
+        let mediaId: string | undefined = undefined;
+
+        if(file){
+            const base64 = file.buffer.toString('base64');
+
+            try{
+                const uploadResult = await firstValueFrom(
+                    this.mediaClient.send('media.uploadProductImage', {
+                        fileName: file.originalname,
+                        mimeType: file.mimetype,
+                        base64,
+                        uploadByUserId: user.clerkUserId
+                    })
+                );
+
+                imageUrl = uploadResult.url;
+                mediaId= uploadResult.mediaId;
+            }catch (err){
+                mapRpcErrorToHttp(err)
+            }
+        }
         let product : Product
 
         const payload = {
@@ -57,19 +91,30 @@ export class ProductsHttpController{
             description: body.description,
             price: Number(body.price),
             status: body.status,
-            imageUrl: '',
+            imageUrl,
             createdByClerkUserId: user.clerkUserId
-        }
-
-
-        //RMQ request and response pattern
-
+        }        //RMQ request and response pattern
         try{
             product = await firstValueFrom(
                 this.catalogClient.send('catalog.create',payload)
             )
         } catch(err){
             mapRpcErrorToHttp(err)
+        }
+
+        if(mediaId){
+            try{
+
+                await firstValueFrom(
+                    this.mediaClient.send('media.attachImage', {
+                        mediaId, 
+                        productId:  String(product._id), 
+                        attachedByUserId: user.clerkUserId,
+                    })
+                )
+            }catch(err){
+                mapRpcErrorToHttp(err)
+            }
         }
 
         return product;

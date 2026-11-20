@@ -1,6 +1,5 @@
 import { ArgumentsHost, Catch } from "@nestjs/common";
 import { BaseRpcExceptionFilter, RpcException } from "@nestjs/microservices";
-import type { Response } from 'express'
 import { RpcErrorPayload } from "./rpc.types";
 
 //this filter runs inside the microservice process
@@ -14,15 +13,17 @@ export class RpcAllExceptionFilter extends BaseRpcExceptionFilter{
         }
 
         const status = exception.getStatus?.();
-            const ctx = host.switchToHttp();
-    const response = ctx.getResponse<Response>();
 
 
     if(status ===400){
+        const response = exception.getResponse?.();
+        const details = typeof response === 'object' && response !== null
+            ? response.message
+            : response;
         const payload: RpcErrorPayload = {
             code : 'VALIDATION_ERROR',
             message: 'Validation failed',
-            details: response
+            details
         }
 
         return super.catch(new RpcException(payload), host)

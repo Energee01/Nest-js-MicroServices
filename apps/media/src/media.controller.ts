@@ -7,7 +7,7 @@ import { AttachToProductDto, uploadImageDto } from './config/media.dto';
 export class MediaController {
   constructor(private readonly mediaService: MediaService) {}
 
-  @MessagePattern('media.uploadImage')
+  @MessagePattern('media.uploadProductImage')
   uploadProductImage(@Payload () payload :uploadImageDto){
     return this.mediaService.uploadProductImage(payload)
   }

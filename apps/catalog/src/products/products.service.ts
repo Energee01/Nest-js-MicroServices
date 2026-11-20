@@ -36,7 +36,7 @@ export class ProductService {
         }
 
         if(input.status && input.status !== 'UNAVAILABLE' && input.status !== 'AVAILABLE'){
-            rpcBadRequest(`Status must be either draft or active`);
+            rpcBadRequest(`Status must be either Available or unavailable`);
         }
 
         const newlyCreatedProduct = await this.productModel.create({
