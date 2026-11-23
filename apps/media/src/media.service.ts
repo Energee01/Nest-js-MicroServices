@@ -90,7 +90,7 @@ export class MediaService {
         }
       },
       {
-        new : true
+        returnDocument: 'after'
       }
     ).exec()
 

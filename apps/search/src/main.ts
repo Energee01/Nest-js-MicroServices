@@ -2,7 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { Logger } from '@nestjs/common';
 import { SearchModule } from './search.module';
 import { Transport, MicroserviceOptions } from '@nestjs/microservices';
-
+import { applyToMicroServiceLayer } from '@app/rpc'
 
 
 async function bootstrap() {
@@ -28,6 +28,8 @@ async function bootstrap() {
       }
     },
   );
+
+  applyToMicroServiceLayer(app)
 
   app.enableShutdownHooks();
 
