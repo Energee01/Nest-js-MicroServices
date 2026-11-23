@@ -16,6 +16,7 @@ import { firstValueFrom} from "rxjs";
 import { AdminOnly } from "../auth/admin.decorator";
 import { Public } from "../auth/public.decorator";
 import { FileInterceptor } from '@nestjs/platform-express';
+import { CreateProductBodyDto } from "./create-products-body.dto";
 
 
 
@@ -39,28 +40,23 @@ export class ProductsHttpController{
         @Inject('MEDIA_CLIENT') private readonly mediaClient:  ClientProxy
     ){}
 
-    @Post('products')
+      @Post('products')
     @AdminOnly()
     @UseInterceptors(
-        FileInterceptor('image', {
-            limits: {
-                fileSize : 5 * 1024 * 1024
-            }
+         FileInterceptor('image', {
+            limits: { fileSize: 5 * 1024 * 1024 },
+            fileFilter: (_req, file, cb) => {
+                cb(null, /^image\/(png|jpe?g|webp|gif)$/.test(file.mimetype));
+            },
         })
     )
     async createProduct(
         @CurrentUser() user: UserContext,
         @UploadedFile() file: Express.Multer.File | undefined,
         @Body()
-        body: {
-            name: string;
-            description: string;
-            price: number;
-            status?: string;
-            imageUrl?: string;
-        }
+        body: CreateProductBodyDto,
     ){
-        //already handling errors in productservice(catalog)
+
         let imageUrl: string | undefined = undefined;
         let mediaId: string | undefined = undefined;
 
@@ -77,26 +73,31 @@ export class ProductsHttpController{
                     })
                 );
 
+
                 imageUrl = uploadResult.url;
-                mediaId= uploadResult.mediaId;
+                mediaId = uploadResult.mediaId;
             }catch (err){
+    
                 mapRpcErrorToHttp(err)
             }
+        
         }
+
         let product : Product
 
         const payload = {
-            //this is gotten from the products dto
             name : body.name,
             description: body.description,
             price: Number(body.price),
             status: body.status,
             imageUrl,
             createdByClerkUserId: user.clerkUserId
-        }        //RMQ request and response pattern
+        }
+
+
         try{
             product = await firstValueFrom(
-                this.catalogClient.send('catalog.create',payload)
+                this.catalogClient.send('catalog.create', payload)
             )
         } catch(err){
             mapRpcErrorToHttp(err)
@@ -104,11 +105,10 @@ export class ProductsHttpController{
 
         if(mediaId){
             try{
-
                 await firstValueFrom(
                     this.mediaClient.send('media.attachImage', {
-                        mediaId, 
-                        productId:  String(product._id), 
+                        mediaId,
+                        productId: String(product._id),
                         attachedByUserId: user.clerkUserId,
                     })
                 )
